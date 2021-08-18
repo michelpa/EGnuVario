@@ -139,7 +139,7 @@ void VarioPower::ScreenCharge()
 #endif //IMU_DEBUG
   
 #ifdef PRO_DEBUG
-  SerialPort.println("Loop");
+//   SerialPort.println("Loop");
 #endif //IMU_DEBUG
 
 	screen.ScreenViewBattery(true);

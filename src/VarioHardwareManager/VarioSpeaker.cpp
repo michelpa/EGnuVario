@@ -12,9 +12,8 @@ void VarioSpeaker::init()
 //*************************
 {
 #if defined(HAVE_SPEAKER)
-    toneHAL.init();
-    beeper.setVolume(10);
-    //beeper.generateTone(2000,300);
+  beeper.setVolume(5);
+  beeper.generateTone(2000, 300);
 #endif
 }
 
@@ -33,34 +32,31 @@ void VarioSpeaker::initSound()
 
   GnuSettings.VARIOMETER_BEEP_VOLUME = GnuSettings.soundSettingRead();
   beeper.setVolume(GnuSettings.VARIOMETER_BEEP_VOLUME);
-  toneHAL.setVolume(GnuSettings.VARIOMETER_BEEP_VOLUME);
 
-	if (GnuSettings.MUTE_VARIOBEGIN)
-	{
+  if (GnuSettings.MUTE_VARIOBEGIN)
+  {
     SerialPort.print("Mute Volume SOUND : MUTE_VARIOBEGIN");
-		Mute();
-	}
+    Mute();
+  }
 
 #ifdef SOUND_DEBUG
   SerialPort.print("Volume SOUND : ");
   SerialPort.println(GnuSettings.VARIOMETER_BEEP_VOLUME);
 #endif //SOUND_DEBUG
 
-#endif //HAVE_SPEAKER	
+#endif //HAVE_SPEAKER
 }
 
 //*************************
 void VarioSpeaker::UnMute()
 //*************************
 {
-	beeper.mute(false);
-	toneHAL.mute(false);
+  beeper.unMute();
 }
 
 //*************************
 void VarioSpeaker::Mute()
 //*************************
 {
-	beeper.mute(true);
-	toneHAL.mute(true);
+  beeper.mute();
 }

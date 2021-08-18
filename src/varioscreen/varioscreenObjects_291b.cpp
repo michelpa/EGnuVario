@@ -126,8 +126,7 @@
 #include <varioscreenIcone_291b.h>
 
 #include <VarioSettings.h>
-#include <toneHAL.h>
-
+#include <VarioBeeper.h>
 #include <Utility.h>
 
 #include <VarioLanguage.h>

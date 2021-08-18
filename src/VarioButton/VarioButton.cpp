@@ -64,8 +64,7 @@
 #include <sdcardHAL.h>
 #endif
 
-#include <toneHAL.h>
-#include <beeper.h>
+#include <VarioBeeper.h>
 #include <varioscreenGxEPD.h>
 #ifdef HAVE_WIFI
 // #include <VarioWifiServer.h>
@@ -191,10 +190,9 @@ void VARIOButtonScheduleur::update()
 				beeper.generateTone(784, 250);
 				beeper.generateTone(1046, 250);
 			}
-			
 		}
 #endif
-		treatmentBtnA2S(false);			
+		treatmentBtnA2S(false);
 		_stateBA = false;
 	}
 
@@ -344,15 +342,14 @@ void VARIOButtonScheduleur::treatmentBtnA(bool Debounce)
 		if (StatePage == STATE_PAGE_CONFIG_SOUND)
 	{
 		uint8_t tmpvol;
-		tmpvol = RegVolume; //toneHAL.getVolume();
+		tmpvol = RegVolume;
 		if (tmpvol > 0)
 		{
 			tmpvol--;
-			//			toneHAL.setVolume(tmpvol);
-			//			beeper.setVolume(tmpvol);
+
 			RegVolume = tmpvol;
-			beeper.generateTone(2000, 300, RegVolume);
-			screen.SetViewSound(RegVolume); //toneHAL.getVolume());
+			beeper.generateTone(500, 300, RegVolume);
+			screen.SetViewSound(RegVolume);
 		}
 	}
 	else if (StatePage == STATE_PAGE_DEEP_SLEEP)
@@ -374,8 +371,9 @@ void VARIOButtonScheduleur::treatmentBtnB(bool Debounce)
 
 		if (screen.schedulerScreen->getPage() == screen.schedulerScreen->getMaxPage() + 1)
 		{
+			varioHardwareManager.varioSpeaker.UnMute();
 			StatePage = STATE_PAGE_CONFIG_SOUND;
-			RegVolume = toneHAL.getVolume();
+			RegVolume = beeper.getVolume();
 			screen.SetViewSound(RegVolume);
 		}
 		else
@@ -385,22 +383,41 @@ void VARIOButtonScheduleur::treatmentBtnB(bool Debounce)
 			SerialPort.println("Mute");
 #endif //BUTTON_DEBUG
 
-			toneHAL.mute(!toneHAL.isMute());
-			screen.volLevel->mute(toneHAL.isMute());
+			if (beeper.isMute())
+			{
+				beeper.unMute();
+			}
+			else
+			{
+				beeper.mute();
+			}
+
+			screen.volLevel->mute(beeper.isMute());
 		}
 	}
 	else if (StatePage == STATE_PAGE_CONFIG_SOUND)
 	{
 		StatePage = STATE_PAGE_VARIO;
 		screen.SetViewSound(RegVolume);
-		toneHAL.setVolume(RegVolume);
+		beeper.setVolume(RegVolume);
 		GnuSettings.soundSettingWrite(RegVolume);
 		screen.volLevel->setVolume(RegVolume);
-		screen.volLevel->mute(toneHAL.isMute());
+		screen.volLevel->mute(beeper.isMute());
+
+#ifdef HAVE_SPEAKER
+		if (GnuSettings.MUTE_VARIOBEGIN)
+		{
+			varioHardwareManager.varioSpeaker.Mute();
+		}
+#endif
 	}
 	else if (StatePage == STATE_PAGE_CALIBRATION)
 	{
 		//lancement de la calibration
+
+		varioHardwareManager.varioSpeaker.UnMute();
+		//   beeper.generateTone(GnuSettings.BEEP_FREQ, 200,10);
+
 		StatePage = STATE_PAGE_CALIBRATE;
 		screen.ScreenViewMessage(varioLanguage.getText(TITRE_ENCOURS), 0); //"en cours", 0);
 		Calibration.Begin();
@@ -414,7 +431,7 @@ void VARIOButtonScheduleur::treatmentBtnB(bool Debounce)
 	else if (StatePage == STATE_PAGE_CHARGE)
 	{
 		varioHardwareManager.varioPower.setRefVoltage(varioHardwareManager.varioPower.getVoltage());
-	}	
+	}
 }
 
 /************************************************************/
@@ -444,15 +461,13 @@ void VARIOButtonScheduleur::treatmentBtnC(bool Debounce)
 	else if (StatePage == STATE_PAGE_CONFIG_SOUND)
 	{
 		uint8_t tmpvol;
-		tmpvol = RegVolume; //toneHAL.getVolume();
+		tmpvol = RegVolume; 
 		if (tmpvol < 10)
 		{
 			tmpvol++;
-			//			toneHAL.setVolume(tmpvol);
-			//			beeper.setVolume(tmpvol);
 			RegVolume = tmpvol;
-			beeper.generateTone(2000, 300, RegVolume);
-			screen.SetViewSound(RegVolume); //toneHAL.getVolume());
+			beeper.generateTone(500, 300, RegVolume);
+			screen.SetViewSound(RegVolume);
 		}
 	}
 	else if (StatePage == STATE_PAGE_INIT)
@@ -480,7 +495,7 @@ void VARIOButtonScheduleur::WifiServeur(void)
 	root = SDHAL_SD.open("/");
 	if (root)
 	{
-#endif //SDFAT_LIB 
+#endif //SDFAT_LIB \
 	//printDirectory(root, 0);
 		root.close();
 	}
@@ -499,16 +514,16 @@ void VARIOButtonScheduleur::WifiServeur(void)
 	TaskHandle_t taskWF;
 	xTaskCreatePinnedToCore(startWifi, "VWF", 10000, NULL, 2, &taskWF, 0);
 
-//	varioWifiServer.begin();
-//	varioWifiServer.connect();
+	//	varioWifiServer.begin();
+	//	varioWifiServer.connect();
 
-//	varioWifiServer.start();
+	//	varioWifiServer.start();
 
 	Set_StatePage(STATE_PAGE_WEBSERV);
 
 	while (1)
 	{
-//		varioWifiServer.handleClient();
+		//		varioWifiServer.handleClient();
 		update();
 	}
 }

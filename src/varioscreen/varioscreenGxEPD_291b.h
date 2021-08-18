@@ -71,6 +71,7 @@
 
 #include <HardwareConfig.h>
 #include <DebugConfig.h>
+#include <VarioBeeper.h>
 
 #if ((VARIOSCREEN_SIZE == 291) || (VARIOSCREEN_SIZE == 293) || (VARIOSCREEN_SIZE == 294))
 

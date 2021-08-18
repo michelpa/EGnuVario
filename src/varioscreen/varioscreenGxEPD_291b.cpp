@@ -98,7 +98,7 @@
 #include <varioscreenIcone_291b.h>
 
 #include <VarioSettings.h>
-#include <toneHAL.h>
+#include <VarioBeeper.h>
 
 #include <Utility.h>
 
@@ -319,14 +319,17 @@ void VarioScreen::init(void)
 #endif //SCREEN_DEBUG
 
 	display.init(0); ///115200);  pour affichage debug Screen GxEPD2
+
 	display.setRotation(0);
+
+	
 
 #ifdef SCREEN_DEBUG
 	SerialPort.println("fillScreen");
 #endif //SCREEN_DEBUG
 
 	display.setFullWindow();
-
+	
 	display.clearScreen();
 
 #ifdef SCREEN_DEBUG
@@ -343,7 +346,6 @@ void VarioScreen::init(void)
 #endif //SCREEN_DEBUG
 
 	xTaskCreatePinnedToCore(screenTask, "TaskDisplay", SCREEN_STACK_SIZE, NULL, SCREEN_PRIORITY, &screenTaskHandler,SCREEN_CORE);
-
 }
 
 //****************************************************************************************************************************
@@ -2041,7 +2043,7 @@ void ScreenScheduler::setPage(int8_t page, boolean forceUpdate)
 			
 			display.fillScreen(ColorScreen);
 			displayStat = true;
-			screen.SetViewSound(toneHAL.getVolume());
+			screen.SetViewSound(beeper.getVolume());
 			display.display(true);
 			xSemaphoreGive(screen.screenMutex);
 		}

@@ -90,7 +90,7 @@
 #include <varioscreenIcone_154.h>
 
 #include <VarioSettings.h>
-#include <toneHAL.h>
+#include <VarioBeeper.h>
 
 #include <Utility.h>
 
@@ -2056,7 +2056,7 @@ void ScreenScheduler::setPage(int8_t page, boolean forceUpdate)  {
 
 	if (currentPage == endPage+1) {
 		displayStat = true;
-		screen.SetViewSound(toneHAL.getVolume());
+		screen.SetViewSound(beeper.getVolume());
 //		  screen.updateScreen ();
 	} else if ((currentPage == endPage+2) && (displayStat)) {
 		displayStat = false;

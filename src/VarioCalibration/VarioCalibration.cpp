@@ -54,8 +54,7 @@
 #include <MPU9250-DMP_SF_EXT.h>
 #endif
 
-#include <toneHAL.h>
-#include <beeper.h>
+#include <VarioBeeper.h>
 #include <digit.h>
 
 #ifdef HAVE_SDCARD
@@ -89,192 +88,204 @@ VarioCalibration Calibration;
 
 #if defined(SDCARD_OUTPUT) && defined(HAVE_SDCARD)
 //****************************************************************************************************************************
-void VarioCalibration::writeNumber(int16_t number) {
-//****************************************************************************************************************************
-  valueDigit.begin((long)number);
-  while( valueDigit.available() ) {
-    file.write( valueDigit.get() );
-  }
+void VarioCalibration::writeNumber(int16_t number)
+{
+	//****************************************************************************************************************************
+	valueDigit.begin((long)number);
+	while (valueDigit.available())
+	{
+		file.write(valueDigit.get());
+	}
 }
 #endif //SDCARD_OUTPUT
 
 /**************************/
-void VarioCalibration::startMeasure(void) {
-/**************************/
+void VarioCalibration::startMeasure(void)
+{
+	/**************************/
 
-  /* stabilize */
-  // just wait
-  unsigned long stabilizeTimestamp = millis();
-  while( millis() - stabilizeTimestamp < STABILIZE_DURATION ) {
-    //makeMeasureStep();
-		
-/*******************************/
-/*  Compute button             */
-/*******************************/
+	/* stabilize */
+	// just wait
+	unsigned long stabilizeTimestamp = millis();
+	while (millis() - stabilizeTimestamp < STABILIZE_DURATION)
+	{
+		//makeMeasureStep();
 
-	#ifdef BUTTON_DEBUG
+		/*******************************/
+		/*  Compute button             */
+		/*******************************/
+
+#ifdef BUTTON_DEBUG
 		SerialPort.println("Lecture boutons");
-	#endif //BUTTON_DEBUG
+#endif //BUTTON_DEBUG
 		ButtonScheduleur.update();
-		
-    delay(100);
-  }
- 
-#ifdef IMU_DEBUG
-  SerialPort.println("init Var");
-#endif //IMU_DEBUG
 
-  /* init vars */
-  measureTimestamp = millis();
-  accelCount = 0;
+		delay(100);
+	}
+
+#ifdef CAL_DEBUG
+	SerialPort.println("init Var");
+#endif //CAL_DEBUG
+
+	/* init vars */
+	measureTimestamp = millis();
+	accelCount = 0;
 #ifdef AK89xx_SECONDARY
-  magCount = 0;
+	magCount = 0;
 #endif
 
-  for( int i = 0; i<3; i++) {
-    accelMean[i] = 0.0;
-    accelSD[i] = 0.0;
+	for (int i = 0; i < 3; i++)
+	{
+		accelMean[i] = 0.0;
+		accelSD[i] = 0.0;
 #ifdef AK89xx_SECONDARY
-    magMean[i] = 0.0;
-    magSD[i] = 0.0;
+		magMean[i] = 0.0;
+		magSD[i] = 0.0;
 #endif
-  }
+	}
 }
 
 /******************************************************/
-uint8_t VarioCalibration::readRawAccel(int16_t* accel, int32_t* quat) {
-/******************************************************/
+uint8_t VarioCalibration::readRawAccel(int16_t *accel, int32_t *quat)
+{
+	/******************************************************/
 
-  if( twScheduler.haveAccel() ) {
-    twScheduler.getRawAccel(accel, quat);
-    return 1;
-  }
+	if (twScheduler.haveAccel())
+	{
+		twScheduler.getRawAccel(accel, quat);
+		return 1;
+	}
 
-  return 0;
+	return 0;
 }
-
 
 #ifdef AK89xx_SECONDARY
 /*******************************/
-uint8_t VarioCalibration::readRawMag(int16_t* mag) {
-/*******************************/
+uint8_t VarioCalibration::readRawMag(int16_t *mag)
+{
+	/*******************************/
 
-  if( twScheduler.haveMag() ) {
-    twScheduler.getRawMag(mag);
-    return 1;
-  }
-  
-  return 0;
+	if (twScheduler.haveMag())
+	{
+		twScheduler.getRawMag(mag);
+		return 1;
+	}
+
+	return 0;
 }
- 
+
 #endif //AK89xx_SECONDARY
 
 /*******************************/
-void VarioCalibration::makeMeasureStep(void) {
-/*******************************/  
-  /* accel */
-  int16_t accel[3];
-  int32_t quat[4];
-  if( readRawAccel(accel, quat) ) {
+void VarioCalibration::makeMeasureStep(void)
+{
+	/*******************************/
+	/* accel */
+	int16_t accel[3];
+	int32_t quat[4];
+	if (readRawAccel(accel, quat))
+	{
 
-#ifdef IMU_DEBUG
-    SerialPort.println("makeMeasureStep : readRawAccel OK");
-#endif //IMU_DEBUG
+#ifdef CAL_DEBUG
+		SerialPort.println("makeMeasureStep : readRawAccel OK");
+#endif //CAL_DEBUG
 
-    accelCount++;
-    for( int i = 0; i<3; i++) {
-      
-      accelMean[i] += (double)accel[i];
-      accelSD[i]   += ((double)accel[i])*((double)accel[i]);
+		accelCount++;
+		for (int i = 0; i < 3; i++)
+		{
 
-#ifdef IMU_DEBUG
-      SerialPort.print("accelMean : ");
-      SerialPort.println( accelMean[i]);
-      SerialPort.print("accelSD : ");
-      SerialPort.println( accelSD[i]);
-#endif //IMU_DEBUG
+			accelMean[i] += (double)accel[i];
+			accelSD[i] += ((double)accel[i]) * ((double)accel[i]);
 
-    }
-  }
+#ifdef CAL_DEBUG
+			SerialPort.print("accelMean : ");
+			SerialPort.println(accelMean[i]);
+			SerialPort.print("accelSD : ");
+			SerialPort.println(accelSD[i]);
+#endif //CAL_DEBUG
+		}
+	}
 
 #ifdef AK89xx_SECONDARY
-  /* mag */
-  int16_t mag[3];
-  if( readRawMag(mag) ) {
-#ifdef IMU_DEBUG
-    SerialPort.println("makeMeasureStep : readRawMag OK");
-#endif //IMU_DEBUG
+	/* mag */
+	int16_t mag[3];
+	if (readRawMag(mag))
+	{
+#ifdef CAL_DEBUG
+		SerialPort.println("makeMeasureStep : readRawMag OK");
+#endif //CAL_DEBUG
 
-   magCount++;
-    for( int i = 0; i<3; i++) {
-      magMean[i] += (double)mag[i];
-      magSD[i] += ((double)mag[i])*((double)mag[i]);
+		magCount++;
+		for (int i = 0; i < 3; i++)
+		{
+			magMean[i] += (double)mag[i];
+			magSD[i] += ((double)mag[i]) * ((double)mag[i]);
 
-#ifdef IMU_DEBUG
-      SerialPort.print("magMean : ");
-      SerialPort.println( magMean[i]);
-      SerialPort.print("magSD : ");
-      SerialPort.println( magSD[i]);
-#endif //IMU_DEBUG
-      
-    }
-  }
+#ifdef CAL_DEBUG
+			SerialPort.print("magMean : ");
+			SerialPort.println(magMean[i]);
+			SerialPort.print("magSD : ");
+			SerialPort.println(magSD[i]);
+#endif //CAL_DEBUG
+		}
+	}
 #endif //AK89xx_SECONDARY
 }
-
 
 /* return standard deviation */
-double VarioCalibration::getAccelMeasure(int16_t* accelMeasure) {
-/*****************************/  
-  double accelMeasureSD = 0.0; 
+double VarioCalibration::getAccelMeasure(int16_t *accelMeasure)
+{
+	/*****************************/
+	double accelMeasureSD = 0.0;
 
-#ifdef IMU_DEBUG
-    SerialPort.println("GetAccelMeasure");
-#endif //IMU_DEBUG
+#ifdef CAL_DEBUG
+	SerialPort.println("GetAccelMeasure");
+#endif //CAL_DEBUG
 
-  for( int i = 0; i<3; i++) {
-    accelMeasureSD += accelSD[i]/(double)accelCount;
-    accelMeasureSD -= (accelMean[i]/(double)accelCount) * (accelMean[i]/(double)accelCount);
-    
-    accelMeasure[i] = (int16_t)(accelMean[i]/(double)accelCount);
+	for (int i = 0; i < 3; i++)
+	{
+		accelMeasureSD += accelSD[i] / (double)accelCount;
+		accelMeasureSD -= (accelMean[i] / (double)accelCount) * (accelMean[i] / (double)accelCount);
 
-#ifdef IMU_DEBUG
-    SerialPort.print("accelMeasure : ");
-    SerialPort.println(accelMeasure[i]);
-#endif //IMU_DEBUG
-    
-  }
+		accelMeasure[i] = (int16_t)(accelMean[i] / (double)accelCount);
 
-  return sqrt(accelMeasureSD);
+#ifdef CAL_DEBUG
+		SerialPort.print("accelMeasure : ");
+		SerialPort.println(accelMeasure[i]);
+#endif //CAL_DEBUG
+	}
+
+	return sqrt(accelMeasureSD);
 }
 
 #ifdef AK89xx_SECONDARY
 /* return standard deviation */
 /*******************************/
-double VarioCalibration::getMagMeasure(int16_t* magMeasure) {
-/*******************************/
+double VarioCalibration::getMagMeasure(int16_t *magMeasure)
+{
+	/*******************************/
 
-#ifdef IMU_DEBUG
-    SerialPort.println("GetMagMeasure");
-#endif //IMU_DEBUG
-  
-  double magMeasureSD = 0.0; 
-    
-  for( int i = 0; i<3; i++) {
-    magMeasureSD += magSD[i]/(double)magCount;
-    magMeasureSD -= (magMean[i]/(double)magCount) * (magMean[i]/(double)magCount);
-    
-    magMeasure[i] = (int16_t)(magMean[i]/(double)magCount);
- #ifdef IMU_DEBUG
-    SerialPort.print("magMeasure : ");
-    SerialPort.println(magMeasure[i]);
-#endif //IMU_DEBUG
- }
+#ifdef CAL_DEBUG
+	SerialPort.println("GetMagMeasure");
+#endif //CAL_DEBUG
 
-  return sqrt(magMeasureSD);
+	double magMeasureSD = 0.0;
+
+	for (int i = 0; i < 3; i++)
+	{
+		magMeasureSD += magSD[i] / (double)magCount;
+		magMeasureSD -= (magMean[i] / (double)magCount) * (magMean[i] / (double)magCount);
+
+		magMeasure[i] = (int16_t)(magMean[i] / (double)magCount);
+#ifdef CAL_DEBUG
+		SerialPort.print("magMeasure : ");
+		SerialPort.println(magMeasure[i]);
+#endif //CAL_DEBUG
+	}
+
+	return sqrt(magMeasureSD);
 }
 #endif //AK89xx_SECONDARY
-
 
 //****************************************************************************************************************************
 void VarioCalibration::Begin(void)
@@ -284,32 +295,32 @@ void VarioCalibration::Begin(void)
 	sdcardFound = true;
 #endif
 
-	toneHAL.enableAmpli();
-  beeper.setVolume(10);
-	beeper.generateTone(2000,300); 
-	
+	beeper.setVolume(10);
+	beeper.generateTone(2000, 300);
+
 	delay(5000);
 
-  /* reset variables */
-#ifdef IMU_DEBUG
-  SerialPort.println("Begin calibration");
-#endif //IMU_DEBUG
-  
-  startMeasure();
-  accelSDRecordTimestamp = millis();  
+	/* reset variables */
+#ifdef CAL_DEBUG
+	SerialPort.println("Begin calibration");
+#endif //CAL_DEBUG
 
-#ifdef IMU_DEBUG
-  SerialPort.println("Loop");
-#endif //IMU_DEBUG
+	startMeasure();
+	accelSDRecordTimestamp = millis();
 
-  while (1) {
-/*******************************/
-/*  Compute button             */
-/*******************************/
+#ifdef CAL_DEBUG
+	SerialPort.println("Loop");
+#endif //CAL_DEBUG
 
-	#ifdef BUTTON_DEBUG
-			 SerialPort.println("Lecture boutons");
-	#endif //BUTTON_DEBUG
+	while (1)
+	{
+		/*******************************/
+		/*  Compute button             */
+		/*******************************/
+
+#ifdef BUTTON_DEBUG
+		SerialPort.println("Lecture boutons");
+#endif //BUTTON_DEBUG
 		ButtonScheduleur.update();
 
 		delay(1);
@@ -318,37 +329,36 @@ void VarioCalibration::Begin(void)
 		/*------------------------------------------------------------*/
 
 		/* first  wait */
-		if( recordInitState == RECORD_STATE_INITIAL ) {
+		if (recordInitState == RECORD_STATE_INITIAL)
+		{
 
-	#ifdef IMU_DEBUG
-			 SerialPort.println("First Wait");
-	#endif //IMU_DEBUG
+#ifdef CAL_DEBUG
+			SerialPort.println("First Wait");
+#endif //CAL_DEBUG
 
 			/* wait finished ? */
-			if( millis() - accelSDRecordTimestamp > ACCEL_SD_WAIT_DURATION ) {
+			if (millis() - accelSDRecordTimestamp > ACCEL_SD_WAIT_DURATION)
+			{
 
 				/* start measure */
-	#ifdef IMU_DEBUG
+#ifdef CAL_DEBUG
 				SerialPort.println("START MESURE");
-	#endif //IMU_DEBUG
-//	#ifdef MAKE_BEEP
-	#ifdef IMU_DEBUG
+#endif //CAL_DEBUG \
+	//	#ifdef MAKE_BEEP
+#ifdef CAL_DEBUG
 				SerialPort.println("BEEP");
-	#endif //IMU_DEBUG
-				toneHAL.enableAmpli();
-				toneHAL.tone(BEEP_START_FREQ, BEEP_VOLUME);
-				delay(BEEP_DURATION);
-				toneHAL.tone(0);
-//				beeper.generateTone(2000,300); 
-//	#endif //MAKE_BEEP     
-	
-	/*******************************/
-/*  Compute button             */
-/*******************************/
+#endif //CAL_DEBUG
+				beeper.generateTone(BEEP_START_FREQ, BEEP_VOLUME, BEEP_DURATION);
+				
+				//	#endif //MAKE_BEEP
 
-	#ifdef BUTTON_DEBUG
+				/*******************************/
+				/*  Compute button             */
+				/*******************************/
+
+#ifdef BUTTON_DEBUG
 				SerialPort.println("Lecture boutons");
-	#endif //BUTTON_DEBUG
+#endif //BUTTON_DEBUG
 				ButtonScheduleur.update();
 
 				startMeasure();
@@ -359,10 +369,12 @@ void VarioCalibration::Begin(void)
 		}
 
 		/* next record accel SD */
-		else if( recordInitState == RECORD_STATE_WAIT_DONE ) {
+		else if (recordInitState == RECORD_STATE_WAIT_DONE)
+		{
 
 			/* accel SD recording finished ? */
-			if( millis() - measureTimestamp > ACCEL_SD_MEASURE_DURATION ) {
+			if (millis() - measureTimestamp > ACCEL_SD_MEASURE_DURATION)
+			{
 
 				/* get result */
 				int16_t measure[3];
@@ -373,18 +385,20 @@ void VarioCalibration::Begin(void)
 			}
 
 			/* else measure */
-			else {
+			else
+			{
 				delay(200);
 				makeMeasureStep();
 			}
 		}
 
 		/* next get gyro calibration */
-		else if( recordInitState == RECORD_STATE_ACCEL_SD_RECORDED ) {
+		else if (recordInitState == RECORD_STATE_ACCEL_SD_RECORDED)
+		{
 
 			/* check if gyro calibrated */
 			unsigned char gyroCal[12];
-			//!!! disabled 
+			//!!! disabled
 			//fastMPUReadGyroBias(gyroCal);
 
 			bool gyroCalibrated = false;
@@ -402,39 +416,43 @@ void VarioCalibration::Begin(void)
                         */
 			//!!!
 			gyroCalibrated = true;
-			if( false ) {
-
+			if (false)
+			{
 			}
 
 			/* output gyro calibration start measures */
-			else {
-				
+			else
+			{
+
 #if defined(SDCARD_OUTPUT) && defined(HAVE_SDCARD)
-				if( sdcardFound ) {
+				if (sdcardFound)
+				{
 #ifdef SDFAT_LIB
 					file.open(filename, O_RDWR | O_CREAT);
-#else //SDFAT_LIB
-					file = SDHAL_SD.open(filename, FILE_WRITE);  //, FILENAME_SIZE);
+#else  //SDFAT_LIB
+					file = SDHAL_SD.open(filename, FILE_WRITE); //, FILENAME_SIZE);
 #endif // SDFAT_LIB
 				}
 
 				writeNumber(gyroCal[0]);
-				for(int i = 1; i<12; i++) {
+				for (int i = 1; i < 12; i++)
+				{
 					file.write(',');
 					file.write(' ');
 					writeNumber(gyroCal[i]);
 				}
 				file.write('\n');
-	#endif //SDCARD_OUTPUT
+#endif //SDCARD_OUTPUT
 
-	#ifdef SERIAL_OUTPUT
+#ifdef SERIAL_OUTPUT
 				SerialPort.print(gyroCal[0], DEC);
-				for(int i = 1; i<12; i++) {
+				for (int i = 1; i < 12; i++)
+				{
 					SerialPort.print(", ");
 					SerialPort.print(gyroCal[i], DEC);
 				}
 				SerialPort.print("\n");
-	#endif //SERIAL_OUTPUT
+#endif //SERIAL_OUTPUT
 
 				/* start recording */
 				recordInitState = RECORD_STATE_GYRO_CALIBRATED;
@@ -445,52 +463,58 @@ void VarioCalibration::Begin(void)
 		/*-----------------*/
 		/* record measures */
 		/*-----------------*/
-		else {
+		else
+		{
 
 			/****************/
 			/* make measure */
 			/****************/
-			if( millis() - measureTimestamp < MEASURE_DURATION ) {
+			if (millis() - measureTimestamp < MEASURE_DURATION)
+			{
 				makeMeasureStep();
 			}
 
 			/******************/
 			/* output measure */
 			/******************/
-			else {
+			else
+			{
 
 				int16_t accelMeasure[3];
 				double accelMeasureSD = getAccelMeasure(accelMeasure);
 
-	#ifdef AK89xx_SECONDARY
+#ifdef AK89xx_SECONDARY
 				int16_t magMeasure[3];
 				double magMeasureSD = getMagMeasure(magMeasure);
-	#endif //AK89xx_SECONDARY
-			
+#endif //AK89xx_SECONDARY
+
 				/**************************/
 				/* check measure validity */
 				/**************************/
 
 				/* check measure stability */
-				if( accelMeasureSD < PREDICTION_INTERVAL_COEFFICIENT * rawAccelSD ) {
+				if (accelMeasureSD < PREDICTION_INTERVAL_COEFFICIENT * rawAccelSD)
+				{
 
 					/* check deviation with last measure */
 					double measureDeviation = 0.0;
-					for( int i = 0; i<3; i++) {
+					for (int i = 0; i < 3; i++)
+					{
 						double s = (double)accelMeasure[i] - (double)lastAccelMeasure[i];
 						measureDeviation += s * s;
 					}
 					measureDeviation = sqrt(measureDeviation);
 
-					if( measureDeviation > NEW_MEASURE_MINIMAL_DEVIATION_COEFF*PREDICTION_INTERVAL_COEFFICIENT*rawAccelSD/sqrt((double)accelCount) ) {
+					if (measureDeviation > NEW_MEASURE_MINIMAL_DEVIATION_COEFF * PREDICTION_INTERVAL_COEFFICIENT * rawAccelSD / sqrt((double)accelCount))
+					{
 
 						/* save measure */
-						for( int i = 0; i<3; i++) {
+						for (int i = 0; i < 3; i++)
+						{
 							lastAccelMeasure[i] = accelMeasure[i];
 						}
 
-
-	#ifdef SERIAL_OUTPUT
+#ifdef SERIAL_OUTPUT
 						/*****************/
 						/* serial output */
 						/*****************/
@@ -499,16 +523,16 @@ void VarioCalibration::Begin(void)
 						SerialPort.print(accelMeasure[1], DEC);
 						SerialPort.print(", ");
 						SerialPort.print(accelMeasure[2], DEC);
-	#ifdef AK89xx_SECONDARY
+#ifdef AK89xx_SECONDARY
 						SerialPort.print(", ");
 						SerialPort.print(magMeasure[0], DEC);
 						SerialPort.print(", ");
 						SerialPort.print(magMeasure[1], DEC);
 						SerialPort.print(", ");
 						SerialPort.print(magMeasure[2], DEC);
-	#endif //AK89xx_SECONDARY
+#endif //AK89xx_SECONDARY
 						SerialPort.print("\n");
-	#endif //SERIAL_OUTPUT
+#endif //SERIAL_OUTPUT
 
 #if defined(SDCARD_OUTPUT) && defined(HAVE_SDCARD)
 						/*****************/
@@ -521,7 +545,7 @@ void VarioCalibration::Begin(void)
 						file.write(',');
 						file.write(' ');
 						writeNumber(accelMeasure[2]);
-	#ifdef AK89xx_SECONDARY
+#ifdef AK89xx_SECONDARY
 						file.write(',');
 						file.write(' ');
 						writeNumber(magMeasure[0]);
@@ -531,37 +555,34 @@ void VarioCalibration::Begin(void)
 						file.write(',');
 						file.write(' ');
 						writeNumber(magMeasure[2]);
-	#endif //AK89xx_SECONDARY
+#endif //AK89xx_SECONDARY
 						file.write('\n');
-						
-						file.flush();
-	#endif //SDCARD_OUTPUT
 
-#ifdef IMU_DEBUG
+						file.flush();
+#endif //SDCARD_OUTPUT
+
+#ifdef CAL_DEBUG
 						SerialPort.println("WRITE DATA");
-#endif //IMU_DEBUG
+#endif //CAL_DEBUG
 //	#ifdef MAKE_BEEP
-#ifdef IMU_DEBUG
+#ifdef CAL_DEBUG
 						SerialPort.println("BEEP");
-#endif //IMU_DEBUG
-						toneHAL.enableAmpli();
-//						beeper.generateTone(2000,300); 
-						toneHAL.tone(BEEP_RECORD_FREQ, BEEP_VOLUME);
+#endif //CAL_DEBUG
+						beeper.generateTone(BEEP_RECORD_FREQ, BEEP_VOLUME, BEEP_DURATION);
 						delay(BEEP_DURATION);
-						toneHAL.tone(0);
-//	#endif //MAKE_BEEP
+						//	#endif //MAKE_BEEP
 					}
 				}
-				
-/*******************************/
-/*  Compute button             */
-/*******************************/
+
+				/*******************************/
+				/*  Compute button             */
+				/*******************************/
 
 #ifdef BUTTON_DEBUG
 				SerialPort.println("Lecture boutons");
 #endif //BUTTON_DEBUG
 				ButtonScheduleur.update();
-				
+
 				/* next */
 				delay(100);
 				startMeasure();

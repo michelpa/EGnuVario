@@ -8,7 +8,7 @@
 #define VERSION 0
 #define SUB_VERSION 8
 #define BETA_CODE 6
-#define DEVNAME "JPG63/MICELPA/RATAMUSE"
+#define DEVNAME "JPG63/MICHELPA/RATAMUSE"
 #define AUTHOR "J" //J=JPG63  P=PUNKDUMP  M=MICHELPA    R=RATAMUSE
 
 /******************************************************************************************************/
@@ -587,7 +587,7 @@
  *                                                                                                            *    
  **************************************************************************************************************/
 
- /*************************************************************************************************************
+/*************************************************************************************************************
   *      Literature                                                                                           *
   *                                                                                                           *
   *      MPU9250                                                                                              *                                                                                                     
@@ -597,7 +597,7 @@
   *    https://www.instructables.com/id/Tilt-Compensated-Compass/                                             *
   *                                                                                                           *
   *************************************************************************************************************/
- 
+
 //*****************************
 // DEBBUGAGE                  *
 //*****************************
@@ -642,8 +642,8 @@
 #include <VarioHardwareManager.h>
 
 #ifdef HAVE_SPEAKER
-#include <toneHAL.h>
-#include <beeper.h>
+#include <VarioBeeper.h>
+VarioBeeper beeper;
 #endif //HAVE_SPEAKER
 
 #include <GPSSentence.h>
@@ -678,7 +678,7 @@ VarioData varioData;
 #include <VarioSettings.h>
 #include <VarioLanguage.h>
 
-#include <VarioXBeeper.h>
+// #include <VarioXBeeper.h>
 
 //*******************************
 // GESTION WIFI                 *
@@ -728,7 +728,6 @@ void setup()
 {
   //****************************
   //****************************
-
 #if defined(ENABLE_DEBUG)
   SerialPort.begin(115200);
 
@@ -774,11 +773,11 @@ void setup()
   SerialPort.print("VERSION : ");
   SerialPort.println(VARIOVERSION);
 
-#if (VARIOVERSION == 154) 
+#if (VARIOVERSION == 154)
   SerialPort.println("VERSION : 1");
-#elif ((VARIOVERSION == 254) || (VARIOVERSION == 290) || (VARIOVERSION == 291) || (VARIOVERSION == 292) || (VARIOVERSION == 293) || (VARIOVERSION == 294)) 
+#elif ((VARIOVERSION == 254) || (VARIOVERSION == 290) || (VARIOVERSION == 291) || (VARIOVERSION == 292) || (VARIOVERSION == 293) || (VARIOVERSION == 294))
   SerialPort.println("VERSION : 2");
-#elif ((VARIOVERSION == 354) || (VARIOVERSION == 390) || (VARIOVERSION == 391) || (VARIOVERSION == 392) || (VARIOVERSION == 393)) 
+#elif ((VARIOVERSION == 354) || (VARIOVERSION == 390) || (VARIOVERSION == 391) || (VARIOVERSION == 392) || (VARIOVERSION == 393))
   SerialPort.println("VERSION : 3");
 #else
   SerialPort.println("VERSION : XXX");
@@ -791,7 +790,7 @@ void setup()
   SerialPort.println("ECRAN : 1.54");
 #elif ((VARIOSCREEN_SIZE == 290) || (VARIOSCREEN_SIZE == 292) || (VARIOVERSION == 390))
   SerialPort.println("ECRAN : 2.90 PAYSAGE");
-#elif ((VARIOSCREEN_SIZE == 291)  || (VARIOSCREEN_SIZE == 293) || (VARIOSCREEN_SIZE == 294))
+#elif ((VARIOSCREEN_SIZE == 291) || (VARIOSCREEN_SIZE == 293) || (VARIOSCREEN_SIZE == 294))
   SerialPort.println("ECRAN : 2.90 PORTRAIT");
 #endif
 
@@ -810,7 +809,7 @@ void setup()
 #elif defined(HAVE_BLE)
   SerialPort.println("BLE : Enable");
 #endif
-  
+
   /************************/
   /*    BOOT SEQUENCE     */
   /************************/
@@ -863,7 +862,7 @@ void setup()
 #ifdef MEMORY_DEBUG
   SerialPort.println("LANGUAGE");
   SerialPort.println(ESP.getFreeHeap());
- #endif
+#endif
 #ifdef SDCARD_DEBUG
   SerialPort.print("TITRE_TIME : ");
   SerialPort.println(varioLanguage.getText(TITRE_TIME));
@@ -926,7 +925,7 @@ void setup()
 
 #if defined(HAVE_SDCARD) && defined(HAVE_WIFI)
   esp32FOTA.UpdateWwwDirectory();
-  if (esp32FOTA.UpdateWwwDirectoryFromGz() == 1) 
+  if (esp32FOTA.UpdateWwwDirectoryFromGz() == 1)
   {
     //Mise à jour
     beeper.generateTone(659, 150);
@@ -936,9 +935,9 @@ void setup()
     SerialPort.println("RESTART ESP32");
     SerialPort.flush();
     ESP_LOGI("GnuVario-E", "RESTART ESP32");
-    ESP.restart();    
-  } 
-  
+    ESP.restart();
+  }
+
 #endif //HAVE_SDCARD
 
   /***************/
@@ -969,7 +968,7 @@ void setup()
   beeper.generateTone(1318, 150);
   beeper.generateTone(2636, 150);
 #endif
-  
+
   screen.ScreenViewInit(VERSION, SUB_VERSION, AUTHOR, BETA_CODE);
 #endif //HAVE_SCREEN
 
@@ -1025,7 +1024,7 @@ void setup()
       compteur++;
 
       //    Messure d'altitude
-      firstAlti = varioHardwareManager.firstAlti();  //getAlti();
+      firstAlti = varioHardwareManager.firstAlti(); //getAlti();
     }
   }
 
@@ -1059,13 +1058,13 @@ void setup()
 #ifdef HAVE_SCREEN
 
   screen.ScreenViewPage(0, true);
-  screen.volLevel->setVolume(toneHAL.getVolume());
+  screen.volLevel->setVolume(beeper.getVolume());
   screen.updateScreen();
 
 #ifdef SOUND_DEBUG
-  SerialPort.print("ToneHal Volume Sound : ");
-  SerialPort.println(toneHAL.getVolume()); //GnuSettings.VARIOMETER_BEEP_VOLUME);
-#endif                                     //SOUND_DEBUG
+  SerialPort.print("beeper Volume Sound : ");
+  SerialPort.println(beeper.getVolume()); //GnuSettings.VARIOMETER_BEEP_VOLUME);
+#endif                                    //SOUND_DEBUG
 
 #ifdef SCREEN_DEBUG
   SerialPort.println("update screen");
@@ -1099,6 +1098,9 @@ void setup()
   //***********************************************
 
   varioData.initTime();
+
+  //demarrage de la tache de beep vario
+  beeper.startTask();
 }
 
 double temprature = 0;
@@ -1107,7 +1109,7 @@ double temprature = 0;
 //*****************************
 void loop()
 {
-  SerialPort.println("loop");
+  // SerialPort.println("loop");
   //****************************
   //****************************
 
@@ -1133,7 +1135,7 @@ void loop()
   //  TRAITEMENT DU SON
   //**********************************************************
 
-  toneHAL.update();
+  // toneHAL.update();
 
   //**********************************************************
   //  TRAITEMENT DES BOUTONS
@@ -1173,7 +1175,7 @@ void loop()
     {
       if (varioData.haveNewClimbRate())
       {
-/*        double tmpvalue = varioData.getClimbRate();
+        /*        double tmpvalue = varioData.getClimbRate();
 #if (VARIOSCREEN_SIZE == 154)
         if (tmpvalue > 9.9)
           tmpvalue = 9.9;
@@ -1193,7 +1195,7 @@ void loop()
     else
     {
 
-/*      double tmpvalue = varioData.getVelocity();
+      /*      double tmpvalue = varioData.getVelocity();
 #if (VARIOSCREEN_SIZE == 154)
       if (tmpvalue > 9.9)
         tmpvalue = 9.9;
@@ -1233,7 +1235,7 @@ void loop()
   /* update beeper */
   /*****************/
 #ifdef HAVE_SPEAKER
-  beeper.update();
+  // beeper.update();
 #ifdef PROG_DEBUG
 //    SerialPort.println("beeper update");
 #endif //PROG_DEBUG
@@ -1242,13 +1244,6 @@ void loop()
   //**********************************************************
   //  TRAITEMENT DU SON
   //**********************************************************
-
-  //***************************************
-  //  TEST
-  //***************************************
-#if defined(TONEXTDAC) || defined(TONEI2S) 
-  toneHAL.update();
-#endif
 
   //**********************************************************
   //  EMISSION TRAME BT
@@ -1298,7 +1293,7 @@ void loop()
     SerialPort.println("Update BLE");
 #endif //GPS_DEBUG
   }
-#endif // HAVE_BLUETOOTH 
+#endif // HAVE_BLUETOOTH
 
 #ifdef HAVE_SCREEN
   if ((varioData.gpsFix > 0) && (varioData.gpsFix < 3))
@@ -1358,7 +1353,7 @@ void loop()
 #ifdef GPS_DEBUG
     SerialPort.print("Sat : ");
     SerialPort.println(nmeaParser.satelliteCount);
-#endif //GPS_DEBUG 
+#endif //GPS_DEBUG \
        //    DUMPLOG(LOG_TYPE_DEBUG,GPS_DEBUG_LOG,nmeaParser.satelliteCount);
   }
 #endif //HAVE_GPS
@@ -1529,7 +1524,7 @@ void loop()
   }
 
   varioData.displayUpdateState = false;
-  
+
 #endif //HAVE_SCREEN
 
   //**********************************************************
@@ -1549,13 +1544,6 @@ void loop()
   //**********************************************************
   //  TRAITEMENT DU SON
   //**********************************************************
-
-  //***************************************
-  //  TEST
-  //***************************************
-#if defined(TONEXTDAC) || defined(TONEI2S)
-  toneHAL.update();
-#endif
 
   /*******************************/
   /*******************************/

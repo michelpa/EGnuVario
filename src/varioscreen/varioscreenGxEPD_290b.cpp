@@ -98,7 +98,7 @@
 #include <varioscreenIcone_290b.h>
 
 #include <VarioSettings.h>
-#include <toneHAL.h>
+#include <VarioBeeper.h>
 
 #include <Utility.h>
 
@@ -2061,7 +2061,7 @@ if (xSemaphoreTake(screen.screenMutex, portMAX_DELAY) == pdTRUE)
 
 		display.fillScreen(ColorScreen);
 		displayStat = true;
-		screen.SetViewSound(toneHAL.getVolume());
+		screen.SetViewSound(beeper.getVolume());
 		display.display(true);
 		xSemaphoreGive(screen.screenMutex);
 		}

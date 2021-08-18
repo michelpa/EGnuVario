@@ -33,7 +33,6 @@
 #include <variostat.h>
 #include <Arduino.h>
 #include <eepromHAL.h>
-#include <toneHAL.h>
 #include <DebugConfig.h>
 
 /*// Write any data structure or variable to EEPROM

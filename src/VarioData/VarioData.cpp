@@ -78,7 +78,7 @@
 
 #include <varioscreenGxEPD.h>
 
-#include <VarioXBeeper.h>
+// #include <VarioXBeeper.h>
 
 //******************************************
 //   Valeur maximum des données            *
@@ -322,9 +322,9 @@ bool VarioData::initSettings(bool Test_SD)
 
     if (SDHAL_SD.exists(tmpFileName))
     {
-      if (!varioXBeeper.readSDSettings(tmpFileName))
-        return false;
-      varioXBeeper.majVarioSettings(&ModifValue);
+      // if (!varioXBeeper.readSDSettings(tmpFileName))
+      //   return false;
+      // varioXBeeper.majVarioSettings(&ModifValue);
       //			varioXBeeper.getFrequence(-1.5);
     }
 

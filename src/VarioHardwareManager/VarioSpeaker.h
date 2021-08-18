@@ -5,18 +5,17 @@
 #include <HardwareConfig.h>
 
 #ifdef HAVE_SPEAKER
-#include <toneHAL.h>
-#include <beeper.h>
+#include <VarioBeeper.h>
 #endif //HAVE_SPEAKER
 
 class VarioSpeaker
 {
 public:
-    VarioSpeaker();
-    void init();
-		void initSound();
-		void UnMute(void);
-		void Mute(void);
+	VarioSpeaker();
+	void init();
+	void initSound();
+	void UnMute(void);
+	void Mute(void);
 };
 
 #endif //VARIO_SPEAKER_H
