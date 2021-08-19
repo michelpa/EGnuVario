@@ -12,6 +12,9 @@
 class VarioBeeper
 {
 private:
+    const TickType_t delayT1 = (1) / portTICK_PERIOD_MS;
+
+    bool _isAmpOn = false;
     bool _muted = false;
 
     float _msclimb[BEEPER_SIZE] = {-10.00, -3.00, -2.00, -1.00, -0.30, 0.10, 0.50, 1.00, 2.00, 3.00, 5.00, 10.00};
@@ -23,9 +26,10 @@ private:
     bool _withZerotage = true;
     float _zerotageLow = -0.7;
     float _zerotageHigh = 0.2;
-    uint16_t _zerotageFreq = 440;
     uint16_t _zerotageCycle = 500;
     uint16_t _zerotageDutty = 5;
+    float _noBeepLow = -1.5;
+    float _noBeepHigh = -0.7;
 
     bool _nearClimbingAlarm = false;
     bool _nearClimbingBeep = false;
@@ -58,6 +62,7 @@ private:
     void task();
 
     void playTone(float_t climb);
+    void playToneSilence();
 
 public:
     VarioBeeper();
