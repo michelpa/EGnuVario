@@ -141,10 +141,10 @@ uint16_t VarioBeeper::getCycle(float_t climb)
 
 uint16_t VarioBeeper::getFrequency(float_t climb)
 {
-    if (isZerotage(climb))
-    {
-        return _zerotageFreq;
-    }
+    // if (isZerotage(climb))
+    // {
+    //     return _zerotageFreq;
+    // }
     return getFromArray(climb, _hertz);
 }
 
@@ -181,19 +181,21 @@ uint16_t VarioBeeper::getFromArray(float_t climb, uint16_t *myArray)
 void VarioBeeper::playTone(float_t climb)
 {
 
-    Serial.println("START playTone");
+    const TickType_t delay = (1) / portTICK_PERIOD_MS;
 
-    Serial.print("_isPlaying:");
-    Serial.println(_isPlaying);
+    // Serial.println("START playTone");
 
-    Serial.print("_remainingSilence:");
-    Serial.println(_remainingSilence);
+    // Serial.print("_isPlaying:");
+    // Serial.println(_isPlaying);
 
-    Serial.print("_remainingDuration :");
-    Serial.println(_remainingDuration);
+    // Serial.print("_remainingSilence:");
+    // Serial.println(_remainingSilence);
 
-    Serial.print("climb :");
-    Serial.println(climb);
+    // Serial.print("_remainingDuration :");
+    // Serial.println(_remainingDuration);
+
+    // Serial.print("climb :");
+    // Serial.println(climb);
     _playToneRunning = true;
     // Serial.print("climb:");
     // Serial.println(climb);
@@ -202,6 +204,7 @@ void VarioBeeper::playTone(float_t climb)
     // Serial.print("volume:");
     // Serial.println(_volume);
 
+    float facteurLissage = 0.60;
     if (!isMute())
     {
         uint8_t stepFrequency = 5;
@@ -209,11 +212,12 @@ void VarioBeeper::playTone(float_t climb)
         {
             if (_remainingDuration > 0)
             {
-                Serial.println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
                 _newFreq = getFrequency(climb);
-
+                //lissage de la frequence
+                _newFreq = (_newFreq * facteurLissage) + (1.00 - facteurLissage) * _freq;
                 if (_newFreq != _freq)
                 {
+
                     _previousClimb = _currentClimb;
                     stepFrequency = max(round(abs(_freq - _newFreq) / 5), (double_t)1);
                     Serial.print("stepFrequency :");
@@ -226,6 +230,7 @@ void VarioBeeper::playTone(float_t climb)
                         {
                             // toneAC(ch, _volume, 1, true);
                             toneAC(ch, _volume);
+                            vTaskDelay(delay);
                             // delay(1);
                         }
                     }
@@ -235,6 +240,7 @@ void VarioBeeper::playTone(float_t climb)
                         {
                             // toneAC(ch, _volume, 1, true);
                             toneAC(ch, _volume);
+                            vTaskDelay(delay);
                             // delay(1);
                         }
                     }
@@ -248,17 +254,12 @@ void VarioBeeper::playTone(float_t climb)
             }
             else
             {
-                Serial.print("getCycle(climb)");
-                Serial.println(getCycle(climb));
-
-                Serial.print("(100 - getDutty(climb) :");
-                Serial.println((100 - getDutty(climb)));
-
                 _remainingSilence = getCycle(climb) * ((100 - getDutty(climb)) / 100.00);
                 if (_remainingSilence > 0)
                 {
                     // pour supprimer le "tac"
                     toneAC(30000, _volume);
+                    vTaskDelay(delay);
                     noToneAC();
                     //disableAmp();
                 }
@@ -273,9 +274,9 @@ void VarioBeeper::playTone(float_t climb)
         {
             if (_remainingSilence <= 0)
             {
-                Serial.println("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz");
                 _startMillis = millis();
                 _freq = getFrequency(climb);
+                _newFreq = _freq;
                 _remainingDuration = getCycle(climb) * (getDutty(climb) / 100.00);
 
                 _isPlaying = true;
@@ -296,7 +297,6 @@ void VarioBeeper::playTone(float_t climb)
     }
 
     _playToneRunning = false;
-    Serial.println("END playTone");
 }
 
 void VarioBeeper::setVelocity(float_t climb)
