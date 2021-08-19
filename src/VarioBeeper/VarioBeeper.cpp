@@ -284,6 +284,15 @@ void VarioBeeper::playTone(float_t climb)
                 {
                     // no beep
                     _remainingSilence = getCycle(climb) * ((100 - getDutty(climb)) / 100.00);
+                    
+                    if (_remainingSilence > 0)
+                    {
+                        // pour supprimer le "tac"
+                        toneAC(30000, _volume);
+                        vTaskDelay(delay);
+                        noToneAC();
+                        disableAmp();
+                    }
                 }
                 else
                 {
