@@ -19,6 +19,7 @@ private:
     uint16_t _cycle[BEEPER_SIZE] = {200, 200, 200, 200, 600, 600, 550, 500, 400, 310, 250, 200};
     uint16_t _dutty[BEEPER_SIZE] = {100, 100, 100, 100, 100, 50, 50, 50, 50, 50, 50, 50};
     // uint16_t _dutty[BEEPER_SIZE] = {50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50};
+    bool _silentOnZerotage = false;
     bool _withZerotage = true;
     float _zerotageLow = -0.7;
     float _zerotageHigh = 0.2;

@@ -141,10 +141,14 @@ uint16_t VarioBeeper::getCycle(float_t climb)
 
 uint16_t VarioBeeper::getFrequency(float_t climb)
 {
-    // if (isZerotage(climb))
-    // {
-    //     return _zerotageFreq;
-    // }
+    if (isZerotage(climb))
+    {
+        if (_silentOnZerotage)
+        {
+            return 0;
+        }
+        //  return _zerotageFreq;
+    }
     return getFromArray(climb, _hertz);
 }
 
@@ -261,7 +265,7 @@ void VarioBeeper::playTone(float_t climb)
                     toneAC(30000, _volume);
                     vTaskDelay(delay);
                     noToneAC();
-                    //disableAmp();
+                    disableAmp();
                 }
 
                 _isPlaying = false;
@@ -276,11 +280,20 @@ void VarioBeeper::playTone(float_t climb)
             {
                 _startMillis = millis();
                 _freq = getFrequency(climb);
-                _newFreq = _freq;
-                _remainingDuration = getCycle(climb) * (getDutty(climb) / 100.00);
+                if (_freq == 0)
+                {
+                    // no beep
+                    _remainingSilence = getCycle(climb) * ((100 - getDutty(climb)) / 100.00);
+                }
+                else
+                {
+                    _newFreq = _freq;
+                    _remainingDuration = getCycle(climb) * (getDutty(climb) / 100.00);
 
-                _isPlaying = true;
-                enableAmp();
+                    _isPlaying = true;
+                    enableAmp();
+                    vTaskDelay(delay * 3);
+                }
             }
             else
             {
