@@ -22,20 +22,33 @@ private:
     uint16_t _cycle[BEEPER_SIZE] = {200, 200, 200, 200, 600, 600, 550, 500, 400, 310, 250, 200};
     uint16_t _dutty[BEEPER_SIZE] = {100, 100, 100, 100, 100, 50, 50, 50, 50, 50, 50, 50};
     // uint16_t _dutty[BEEPER_SIZE] = {50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50};
+
+    // silence sur zerotage
+    // surcharge les autres configs
     bool _silentOnZerotage = false;
+
+    // parametrage du zerotage
+    // si activé, surcharge le fonctionnement normal
     bool _withZerotage = true;
     float _zerotageLow = -0.7;
     float _zerotageHigh = 0.2;
-    uint16_t _zerotageCycle = 500;
+    uint16_t _zerotageCycleLow = 600;
+    uint16_t _zerotageCycleHigh = 300;
     uint16_t _zerotageDutty = 5;
+
+    //parametrage la zone sans bip
+    bool _isNoBeepEnable = true;
     float _noBeepLow = -1.5;
     float _noBeepHigh = -0.7;
 
+    // a implementer pour compatibilité
     bool _nearClimbingAlarm = false;
     bool _nearClimbingBeep = false;
 
     bool _isPlaying = false;
+    bool _isSilencing = true;
     bool _playToneRunning = false;
+
     int32_t _remainingDuration = 0;
     int32_t _remainingSilence = 0;
     uint16_t _freq = 400;
