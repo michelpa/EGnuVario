@@ -21,7 +21,6 @@ private:
     uint16_t _hertz[BEEPER_SIZE] = {200, 293, 369, 440, 475, 493, 550, 595, 675, 745, 880, 1108};
     uint16_t _cycle[BEEPER_SIZE] = {200, 200, 200, 200, 600, 600, 550, 500, 400, 310, 250, 200};
     uint16_t _dutty[BEEPER_SIZE] = {100, 100, 100, 100, 100, 50, 50, 50, 50, 50, 50, 50};
-    // uint16_t _dutty[BEEPER_SIZE] = {50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50};
 
     // silence sur zerotage
     // surcharge les autres configs
@@ -32,8 +31,8 @@ private:
     bool _withZerotage = true;
     float _zerotageLow = -0.7;
     float _zerotageHigh = 0.2;
-    uint16_t _zerotageCycleLow = 600;
-    uint16_t _zerotageCycleHigh = 300;
+    uint16_t _zerotageCycleLow = 1000;
+    uint16_t _zerotageCycleHigh = 450;
     uint16_t _zerotageDutty = 5;
 
     //parametrage la zone sans bip
@@ -51,6 +50,8 @@ private:
 
     int32_t _remainingDuration = 0;
     int32_t _remainingSilence = 0;
+
+    float_t _climbStep = 0.2;
     uint16_t _freq = 400;
     uint16_t _newFreq = 400;
     uint8_t _volume = BEEP_DEFAULT_VOLUME;
@@ -58,7 +59,9 @@ private:
     uint32_t _endMillis;
     uint32_t _delta;
     float_t _currentClimb;
-    float_t _previousClimb;
+    float_t _playingClimb = 0;
+
+    TaskHandle_t _taskVarioSoundHandle = NULL;
 
     void enableAmp();
     void disableAmp();

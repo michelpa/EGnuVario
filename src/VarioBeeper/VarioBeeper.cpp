@@ -3,9 +3,6 @@
 
 VarioBeeper::VarioBeeper()
 {
-    enableAmp();
-    //start beep task
-    // startTask();
 }
 
 void VarioBeeper::init(double sinkingThreshold, double climbingThreshold, double nearClimbingSensitivity, uint8_t baseVolume)
@@ -75,18 +72,34 @@ bool VarioBeeper::isMute(void)
 
 void VarioBeeper::generateTone(uint32_t fHz, int ms)
 {
+    if (_taskVarioSoundHandle != NULL)
+    {
+        vTaskSuspend(_taskVarioSoundHandle);
+    }
     enableAmp();
     vTaskDelay(delayT1 * 10);
     toneAC(fHz, _volume, ms);
     disableAmp();
+    if (_taskVarioSoundHandle != NULL)
+    {
+        vTaskResume(_taskVarioSoundHandle);
+    }
 }
 
 void VarioBeeper::generateTone(uint32_t fHz, int ms, uint8_t volume)
 {
+    if (_taskVarioSoundHandle != NULL)
+    {
+        vTaskSuspend(_taskVarioSoundHandle);
+    }
     enableAmp();
     vTaskDelay(delayT1 * 10);
     toneAC(fHz, volume, ms);
     disableAmp();
+    if (_taskVarioSoundHandle != NULL)
+    {
+        vTaskResume(_taskVarioSoundHandle);
+    }
 }
 
 void VarioBeeper::setGlidingAlarmState(bool state)
@@ -105,13 +118,22 @@ void VarioBeeper::task()
     while (1)
     {
         // //play beep based on climb rate
-        // if (abs(_previousClimb - _currentClimb) > 0.1)
-        // {
+
         if (!_playToneRunning)
         {
-            playTone(_currentClimb);
+            if (_playingClimb > _currentClimb)
+            {
+                _playingClimb -= _climbStep;
+                _playingClimb = max(_playingClimb, _currentClimb);
+            }
+            else if (_playingClimb < _currentClimb)
+            {
+                _playingClimb += _climbStep;
+                _playingClimb = min(_playingClimb, _currentClimb);
+            }
+
+            playTone(_playingClimb);
         }
-        // }
 
         // // give time to other tasks
         vTaskDelay(delayT1 * 10);
@@ -129,7 +151,7 @@ void VarioBeeper::startTaskImpl(void *parm)
 void VarioBeeper::startTask()
 {
     // task creation
-    xTaskCreate(this->startTaskImpl, "TaskVarioSound", 2048, this, 20, NULL);
+    xTaskCreate(this->startTaskImpl, "TaskVarioSound", 2048, this, 20, &_taskVarioSoundHandle);
 }
 
 uint16_t VarioBeeper::getDutty(float_t climb)
@@ -256,8 +278,6 @@ void VarioBeeper::playTone(float_t climb)
 
                     if (_newFreq != _freq)
                     {
-
-                        _previousClimb = _currentClimb;
                         stepFrequency = max(round(abs(_freq - _newFreq) / 5), (double_t)1);
                         Serial.print("stepFrequency :");
                         Serial.println(stepFrequency);
