@@ -75,9 +75,10 @@ void VarioBeeper::generateTone(uint32_t fHz, int ms)
     if (_taskVarioSoundHandle != NULL)
     {
         vTaskSuspend(_taskVarioSoundHandle);
+        Serial.println("suspend task");
     }
     enableAmp();
-    vTaskDelay(delayT1 * 10);
+    vTaskDelay(delayT1 * 20);
     toneAC(fHz, _volume, ms);
     disableAmp();
     if (_taskVarioSoundHandle != NULL)
@@ -91,9 +92,10 @@ void VarioBeeper::generateTone(uint32_t fHz, int ms, uint8_t volume)
     if (_taskVarioSoundHandle != NULL)
     {
         vTaskSuspend(_taskVarioSoundHandle);
+        Serial.println("suspend task");
     }
     enableAmp();
-    vTaskDelay(delayT1 * 10);
+    vTaskDelay(delayT1 * 20);
     toneAC(fHz, volume, ms);
     disableAmp();
     if (_taskVarioSoundHandle != NULL)
@@ -117,32 +119,43 @@ void VarioBeeper::task()
     enableAmp();
     while (1)
     {
-        // //play beep based on climb rate
-
+        // play beep based on climb rate
         if (!_playToneRunning)
         {
-            if (_playingClimb > _currentClimb)
+            if (_withZerotage && _isPreviousToneIsZerotage && !isZerotage(_currentClimb))
             {
-                _playingClimb -= _climbStep;
-                _playingClimb = max(_playingClimb, _currentClimb);
+                //on sort de la zone de zerotage, ce doit etre immédiat
+                enableAmp();
+                _isPlaying = false;
+                _remainingSilence = 0;
+                _playingClimb = _currentClimb;
             }
-            else if (_playingClimb < _currentClimb)
+            else
             {
-                _playingClimb += _climbStep;
-                _playingClimb = min(_playingClimb, _currentClimb);
+                if (_playingClimb > _currentClimb)
+                {
+                    _playingClimb -= _climbStep;
+                    _playingClimb = max(_playingClimb, _currentClimb);
+                }
+                else if (_playingClimb < _currentClimb)
+                {
+                    _playingClimb += _climbStep;
+                    _playingClimb = min(_playingClimb, _currentClimb);
+                }
             }
 
             playTone(_playingClimb);
+            _isPreviousToneIsZerotage = isZerotage(_playingClimb);
         }
 
-        // // give time to other tasks
+        // give time to other tasks
         vTaskDelay(delayT1 * 10);
     }
 }
 
 void VarioBeeper::startTaskImpl(void *parm)
 {
-    Serial.println("START Task VarioBeeper");
+    // Serial.println("START Task VarioBeeper");
 
     // wrapper for task
     static_cast<VarioBeeper *>(parm)->task();
@@ -160,6 +173,7 @@ uint16_t VarioBeeper::getDutty(float_t climb)
     {
         return _zerotageDutty;
     }
+
     return getFromArray(climb, _dutty);
 }
 
@@ -169,6 +183,7 @@ uint16_t VarioBeeper::getCycle(float_t climb)
     {
         return _zerotageCycleLow - ((-_zerotageLow - climb) * (_zerotageCycleHigh - _zerotageCycleLow) / (_zerotageHigh - _zerotageLow));
     }
+
     return getFromArray(climb, _cycle);
 }
 
@@ -181,12 +196,12 @@ uint16_t VarioBeeper::getFrequency(float_t climb)
             return 0;
         }
     }
+
     return getFromArray(climb, _hertz);
 }
 
 bool VarioBeeper::isZerotage(float_t climb)
 {
-
     return (_withZerotage && climb >= _zerotageLow && climb <= _zerotageHigh) ? true : false;
 }
 
@@ -243,7 +258,6 @@ void VarioBeeper::playTone(float_t climb)
 
     if (!isMute())
     {
-
         if (_isNoBeepEnable && climb > _noBeepLow && climb < _noBeepHigh)
         {
             if (!_isSilencing)
@@ -263,6 +277,7 @@ void VarioBeeper::playTone(float_t climb)
                 _remainingSilence = 0;
             }
             _playToneRunning = false;
+
             return;
         }
 
@@ -341,6 +356,8 @@ void VarioBeeper::playTone(float_t climb)
                     _remainingDuration = getCycle(climb) * (getDutty(climb) / 100.00);
                     _isSilencing = false;
                     _isPlaying = true;
+                    //on joue tout de suite
+                    playTone(climb);
                 }
             }
             else

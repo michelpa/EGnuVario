@@ -29,6 +29,7 @@ private:
     // parametrage du zerotage
     // si activé, surcharge le fonctionnement normal
     bool _withZerotage = true;
+    bool _isPreviousToneIsZerotage = false;
     float _zerotageLow = -0.7;
     float _zerotageHigh = 0.2;
     uint16_t _zerotageCycleLow = 1000;
