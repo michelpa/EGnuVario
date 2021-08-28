@@ -348,8 +348,8 @@ void VarioCalibration::Begin(void)
 #ifdef CAL_DEBUG
 				SerialPort.println("BEEP");
 #endif //CAL_DEBUG
-				beeper.generateTone(BEEP_START_FREQ, BEEP_VOLUME, BEEP_DURATION);
-				
+				beeper.generateTone(BEEP_START_FREQ, BEEP_DURATION, BEEP_VOLUME);
+
 				//	#endif //MAKE_BEEP
 
 				/*******************************/
@@ -568,7 +568,7 @@ void VarioCalibration::Begin(void)
 #ifdef CAL_DEBUG
 						SerialPort.println("BEEP");
 #endif //CAL_DEBUG
-						beeper.generateTone(BEEP_RECORD_FREQ, BEEP_VOLUME, BEEP_DURATION);
+						beeper.generateTone(BEEP_RECORD_FREQ, BEEP_DURATION, BEEP_VOLUME);
 						delay(BEEP_DURATION);
 						//	#endif //MAKE_BEEP
 					}
