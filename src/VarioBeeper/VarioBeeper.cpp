@@ -5,105 +5,6 @@ VarioBeeper::VarioBeeper()
 {
 }
 
-void VarioBeeper::init(double sinkingThreshold, double climbingThreshold, double nearClimbingSensitivity, uint8_t baseVolume)
-{
-
-    _volume = baseVolume;
-
-    // /* set threshold */
-    // setThresholds(sinkingThreshold, climbingThreshold, nearClimbingSensitivity);
-
-    // /* init private vars */
-    // beepStartTime = 0;
-    // beepState = 0;
-    // beepType = BEEP_TYPE_SILENT;
-
-    // //init le duty / cycle
-    // CLIMBING_BEEP_HIGH_LENGTH = 500;
-    // CLIMBING_BEEP_LOW_LENGTH = 500;
-    // CLIMBING_BEEP_LENGTH = (CLIMBING_BEEP_HIGH_LENGTH + CLIMBING_BEEP_LOW_LENGTH);
-}
-
-void VarioBeeper::enableAmp()
-{
-    if (!_isAmpOn)
-    {
-        pinMode(PIN_AUDIO_AMP_ENA, OUTPUT);
-        digitalWrite(PIN_AUDIO_AMP_ENA, HIGH);
-        _isAmpOn = true;
-    }
-};
-
-void VarioBeeper::disableAmp()
-{
-    if (_isAmpOn)
-    {
-        pinMode(PIN_AUDIO_AMP_ENA, OUTPUT);
-        digitalWrite(PIN_AUDIO_AMP_ENA, LOW);
-        _isAmpOn = false;
-    }
-}
-
-void VarioBeeper::setVolume(uint8_t newVolume)
-{
-    _volume = newVolume;
-}
-
-uint8_t VarioBeeper::getVolume()
-{
-    return _volume;
-}
-
-void VarioBeeper::mute()
-{
-    noToneAC();
-    _muted = true;
-}
-
-void VarioBeeper::unMute()
-{
-    _muted = false;
-}
-
-bool VarioBeeper::isMute(void)
-{
-    return _muted;
-}
-
-void VarioBeeper::generateTone(uint32_t fHz, int ms)
-{
-    if (_taskVarioSoundHandle != NULL)
-    {
-        vTaskSuspend(_taskVarioSoundHandle);
-        Serial.println("suspend task");
-    }
-    enableAmp();
-    vTaskDelay(delayT1 * 20);
-    toneAC(fHz, _volume, ms);
-    disableAmp();
-    if (_taskVarioSoundHandle != NULL)
-    {
-        vTaskResume(_taskVarioSoundHandle);
-    }
-}
-
-void VarioBeeper::generateTone(uint32_t fHz, int ms, uint8_t volume)
-{
-    if (_taskVarioSoundHandle != NULL)
-    {
-        vTaskSuspend(_taskVarioSoundHandle);
-        Serial.println("suspend task");
-    }
-    enableAmp();
-    vTaskDelay(delayT1 * 20);
-    toneAC(fHz, volume, ms);
-    disableAmp();
-    if (_taskVarioSoundHandle != NULL)
-    {
-        vTaskResume(_taskVarioSoundHandle);
-    }
-}
-
 void VarioBeeper::setGlidingAlarmState(bool state)
 {
     _nearClimbingAlarm = state;
@@ -114,57 +15,16 @@ void VarioBeeper::setGlidingBeepState(bool state)
     _nearClimbingBeep = state;
 }
 
-void VarioBeeper::task()
+VARIOCYCLE VarioBeeper::getToneFromMs(float_t m)
 {
-    enableAmp();
-    while (1)
-    {
-        // play beep based on climb rate
-        if (!_playToneRunning)
-        {
-            if (_withZerotage && _isPreviousToneIsZerotage && !isZerotage(_currentClimb))
-            {
-                //on sort de la zone de zerotage, ce doit etre immédiat
-                enableAmp();
-                _isPlaying = false;
-                _remainingSilence = 0;
-                _playingClimb = _currentClimb;
-            }
-            else
-            {
-                if (_playingClimb > _currentClimb)
-                {
-                    _playingClimb -= _climbStep;
-                    _playingClimb = max(_playingClimb, _currentClimb);
-                }
-                else if (_playingClimb < _currentClimb)
-                {
-                    _playingClimb += _climbStep;
-                    _playingClimb = min(_playingClimb, _currentClimb);
-                }
-            }
+    VARIOCYCLE tone;
 
-            playTone(_playingClimb);
-            _isPreviousToneIsZerotage = isZerotage(_playingClimb);
-        }
+    tone.ms = m;
+    tone.cycle = getCycle(m);
+    tone.dutty = getDutty(m);
+    tone.freq = getFrequency(m);
 
-        // give time to other tasks
-        vTaskDelay(delayT1 * 10);
-    }
-}
-
-void VarioBeeper::startTaskImpl(void *parm)
-{
-    // Serial.println("START Task VarioBeeper");
-
-    // wrapper for task
-    static_cast<VarioBeeper *>(parm)->task();
-}
-
-void VarioBeeper::startTask()
-{
-    // task creation
-    xTaskCreate(this->startTaskImpl, "TaskVarioSound", 2048, this, 20, &_taskVarioSoundHandle);
+    return tone;
 }
 
 uint16_t VarioBeeper::getDutty(float_t climb)
@@ -181,7 +41,7 @@ uint16_t VarioBeeper::getCycle(float_t climb)
 {
     if (isZerotage(climb))
     {
-        return _zerotageCycleLow - ((-_zerotageLow - climb) * (_zerotageCycleHigh - _zerotageCycleLow) / (_zerotageHigh - _zerotageLow));
+        return _zerotageCycleLow - ((-_zerotageLow - climb) * (_zerotageCycleHigh - _zerotageCycleLow) / (_climbToneOnThreshold - _zerotageLow));
     }
 
     return getFromArray(climb, _cycle);
@@ -189,20 +49,12 @@ uint16_t VarioBeeper::getCycle(float_t climb)
 
 uint16_t VarioBeeper::getFrequency(float_t climb)
 {
-    if (isZerotage(climb))
-    {
-        if (_silentOnZerotage)
-        {
-            return 0;
-        }
-    }
-
     return getFromArray(climb, _hertz);
 }
 
 bool VarioBeeper::isZerotage(float_t climb)
 {
-    return (_withZerotage && climb >= _zerotageLow && climb <= _zerotageHigh) ? true : false;
+    return (_withZerotage && climb >= _zerotageLow && climb <= _climbToneOnThreshold) ? true : false;
 }
 
 uint16_t VarioBeeper::getFromArray(float_t climb, uint16_t *myArray)
@@ -222,179 +74,167 @@ uint16_t VarioBeeper::getFromArray(float_t climb, uint16_t *myArray)
 
             return before + (climb - _msclimb[i - 1]) * nbByMs;
         }
-        else if (i == (BEEPER_SIZE - 1))
-        {
-            return before + (climb - _msclimb[i - 1]) * nbByMs;
-        }
     }
+
+    return before + (climb - _msclimb[BEEPER_SIZE - 1]) * nbByMs;
 }
 
-void VarioBeeper::playTone(float_t climb)
+void VarioBeeper::startTask()
 {
+    // task creation
+    xTaskCreate(this->startTaskImpl, "TaskVarioBeeper", 2048, this, 20, &_taskVarioBeeperHandle);
+}
 
-    Serial.println("START playTone");
+void VarioBeeper::startTaskImpl(void *parm)
+{
+#ifdef SOUND_DEBUG
+    SerialPort.println("START Task VarioBeeper");
+#endif //SOUND_DEBUG
 
-    Serial.print("_isPlaying:");
-    Serial.println(_isPlaying);
+    // wrapper for task
+    static_cast<VarioBeeper *>(parm)->task();
+}
 
-    Serial.print("_remainingSilence:");
-    Serial.println(_remainingSilence);
+void VarioBeeper::task()
+{
+    enableAmp();
 
-    Serial.print("_remainingDuration :");
-    Serial.println(_remainingDuration);
-
-    Serial.print("climb :");
-    Serial.println(climb);
-    _playToneRunning = true;
-    // Serial.print("climb:");
-    // Serial.println(climb);
-    // Serial.print("isMute:");
-    // Serial.println(isMute());
-    // Serial.print("volume:");
-    // Serial.println(_volume);
-
-    uint8_t stepFrequency;
-    float facteurLissage = 0.60;
-
-    if (!isMute())
+    while (1)
     {
-        if (_isNoBeepEnable && climb > _noBeepLow && climb < _noBeepHigh)
+        // play beep based on climb rate
+        if (vario.msIs > vario.msShould)
         {
-            if (!_isSilencing)
-            {
-                // pour supprimer le "tac"
-                toneAC(30000, _volume);
-                vTaskDelay(delayT1);
-
-                //silencing
-                noToneAC();
-                // disableAmp();
-                _isSilencing = true;
-
-                // force stop running cycle if any
-                _isPlaying = false;
-                _remainingDuration = 0;
-                _remainingSilence = 0;
-            }
-            _playToneRunning = false;
-
-            return;
+            vario.msIs -= vario.climbStep;
+            vario.msIs = max(vario.msIs, vario.msShould);
+        }
+        else if (vario.msIs < vario.msShould)
+        {
+            vario.msIs += vario.climbStep;
+            vario.msIs = min(vario.msIs, vario.msShould);
         }
 
-        if (_isPlaying && _remainingSilence <= 0)
+        // check the thresholds
+        if (vario.isSilent)
         {
-            if (_remainingDuration > 0)
+            if ((_withZerotage && isZerotage(vario.msIs)) || vario.msIs >= _climbToneOnThreshold || vario.msIs <= _sinkToneOnThreshold)
             {
-                _newFreq = getFrequency(climb);
-                if (_newFreq != 0)
-                {
-                    //lissage de la frequence
-                    _newFreq = (_newFreq * facteurLissage) + (1.00 - facteurLissage) * _freq;
-
-                    if (_newFreq != _freq)
-                    {
-                        stepFrequency = max(round(abs(_freq - _newFreq) / 5), (double_t)1);
-                        Serial.print("stepFrequency :");
-                        Serial.println(stepFrequency);
-                        // Serial.print("_newFreq:");
-                        // Serial.println(_newFreq);
-                        if (_freq < _newFreq)
-                        {
-                            for (uint16_t ch = _freq; ch <= _newFreq; ch += stepFrequency)
-                            {
-                                toneAC(ch, _volume);
-                                vTaskDelay(delayT1);
-                            }
-                        }
-                        else if (_freq > _newFreq)
-                        {
-                            for (uint16_t ch = _freq; ch >= _newFreq; ch -= stepFrequency)
-                            {
-                                toneAC(ch, _volume);
-                                vTaskDelay(delayT1);
-                            }
-                        }
-                    }
-                    toneAC(_newFreq, _volume);
-                }
-                _freq = _newFreq;
-                _endMillis = millis();
-                _delta = (_endMillis - _startMillis);
-                _remainingDuration -= _delta;
-                _startMillis = millis();
-            }
-            else
-            {
-                _remainingSilence = getCycle(climb) * ((100 - getDutty(climb)) / 100.00);
-
-                playToneSilence();
-
-                _isPlaying = false;
-
-                //silence start
-                _startMillis = millis();
+                vario.isSilent = false;
             }
         }
         else
         {
-            if (_remainingSilence <= 0)
+            if ((!_withZerotage && vario.msIs >= _sinkToneOffThreshold && vario.msIs <= _climbToneOffThreshold) || (_withZerotage && vario.msIs >= _sinkToneOffThreshold && vario.msIs <= _zerotageLow))
             {
-                _startMillis = millis();
-                _freq = getFrequency(climb);
-                if (_freq == 0)
-                {
-                    // no beep
-                    _isPlaying = false;
-                    _remainingDuration = -1;
-                    _remainingSilence = getCycle(climb) * ((100 - getDutty(climb)) / 100.00);
+                vario.isSilent = true;
+            }
+        }
 
-                    playToneSilence();
+        if (vario.isSilent)
+        {
+            stopTone();
+        }
+        else
+        {
+            if (_withZerotage && _isPreviousToneIsZerotage && !isZerotage(vario.msIs))
+            {
+                //on sort de la zone de zerotage, ce doit etre immédiat
+                enableAmp();
+                vario.timeToneOn = 0;
+            }
+            VARIOCYCLE tCycle = getToneFromMs(vario.msIs);
+            startTone(tCycle.freq, tCycle.cycle, tCycle.dutty);
+            _isPreviousToneIsZerotage = isZerotage(vario.msIs);
+        }
+
+        // give time to other tasks
+        vTaskDelay(delayT1 * 10);
+    }
+}
+
+void VarioBeeper::startTone(float_t frequency, float_t cycle, float_t duty)
+{
+    if (frequency == 0 || duty == 0)
+        return;
+
+    if (vario.frequency != frequency)
+    {
+        vario.frequency = frequency;
+    }
+
+    uint32_t now = millis();
+
+    // Serial.print("vario.timeToneOn");
+    // Serial.println(vario.timeToneOn);
+    // Serial.print("vario.ms");
+    // Serial.println(vario.msIs);
+    // Serial.print("vario.duty");
+    // Serial.println(vario.duty);
+    // Serial.print("vario.frequency");
+    // Serial.println(vario.frequency);
+    // Serial.print("amp");
+    // Serial.println(_isAmpOn);
+
+    if (vario.timeToneOn == 0 && vario.duty > 0)
+    {
+        //demarrage du cycle
+        enableAmp();
+        vario.cycleIsOn = true;
+        vario.duttyIsOn = false;
+        vario.timeToneOn = now; //date de demarrage du cycle
+        toneAC(vario.frequency, getVolume());
+    }
+    else if (vario.cycleIsOn)
+    {
+        //si le cycle est terminé
+        if ((now - vario.timeToneOn) >= vario.cycle)
+        {
+            vario.timeToneOn = 0;
+            vario.cycleIsOn = false;
+            vario.duttyIsOn = false;
+        }
+        else
+        {
+            //si la partie jouée du cycle est terminée
+            if ((now - vario.timeToneOn) >= (vario.cycle * vario.duty / 100.00))
+            {
+                if (vario.duttyIsOn)
+                {
+                    //redemarrage de l'ampli pour le prochain cycle
+                    if ((vario.cycle - (now - vario.timeToneOn)) < 80)
+                    {
+                        enableAmp();
+                    }
                 }
                 else
                 {
-                    _newFreq = _freq;
-                    _remainingDuration = getCycle(climb) * (getDutty(climb) / 100.00);
-                    _isSilencing = false;
-                    _isPlaying = true;
-                    //on joue tout de suite
-                    playTone(climb);
+                    vario.duttyIsOn = true;
+                    toneAC(30000, getVolume());
+                    noToneAC();
+                    disableAmp();
                 }
             }
             else
             {
-                _endMillis = millis();
-                _delta = (_endMillis - _startMillis);
-                _remainingSilence -= _delta;
-                _startMillis = millis();
-                if (_remainingSilence < 80)
-                {
-                    enableAmp();
-                }
+                // on est en cours de cycle, on change la frequence
+                toneAC(vario.frequency, getVolume());
             }
         }
     }
-    else
-    {
-        noToneAC();
-    }
 
-    _playToneRunning = false;
+    // on met a jour avec les valeurs du cycle en cours
+    vario.duty = duty;
+    vario.cycle = cycle;
 }
 
-void VarioBeeper::playToneSilence()
+void VarioBeeper::stopTone()
 {
-    if (_remainingSilence > 0)
-    {
-        if (!_isSilencing)
-        {
-            // pour supprimer le "tac"
-            toneAC(30000, _volume);
-            vTaskDelay(delayT1);
-            noToneAC();
-            disableAmp();
-            _isSilencing = true;
-        }
-    }
+    vario.frequency = 0;
+    vario.timeToneOn = 0;
+    // pour supprimer le "tac"
+    toneAC(30000, getVolume());
+    // vTaskDelay(delayT1);
+    noToneAC();
+    disableAmp();
 }
 
 void VarioBeeper::setVelocity(float_t climb)
@@ -408,5 +248,5 @@ void VarioBeeper::setVelocity(float_t climb)
         climb = 10;
     }
 
-    _currentClimb = climb;
+    vario.msShould = climb;
 }
