@@ -101,6 +101,7 @@ void VarioBeeper::task()
 
     while (1)
     {
+
         // play beep based on climb rate
         if (vario.msIs > vario.msShould)
         {
@@ -129,7 +130,7 @@ void VarioBeeper::task()
             }
         }
 
-        if (vario.isSilent)
+        if (vario.isSilent || isMute())
         {
             stopTone();
         }
@@ -153,7 +154,7 @@ void VarioBeeper::task()
 
 void VarioBeeper::startTone(float_t frequency, float_t cycle, float_t duty)
 {
-    if (frequency == 0 || duty == 0)
+    if (frequency == 0 || duty == 0 || isMute())
         return;
 
     if (vario.frequency != frequency)
