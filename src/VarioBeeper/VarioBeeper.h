@@ -45,7 +45,7 @@ private:
 
     // parametrage du zerotage
     // si activé, surcharge le fonctionnement normal
-    bool _withZerotage = false;
+    bool _withZerotage = true;
 
     bool _isPreviousToneIsZerotage = false;
 
@@ -77,6 +77,7 @@ public:
     VarioBeeper();
     void startTask();
     void setVelocity(float_t climb);
+    void toggleZerotage();
 
     void setGlidingAlarmState(bool state);
     void setGlidingBeepState(bool state);

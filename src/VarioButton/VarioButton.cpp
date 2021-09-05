@@ -251,23 +251,15 @@ void VARIOButtonScheduleur::update()
 	/////////////////////////////////////////////////
 
 	if (VarioButton.BtnC.isPressed())
-	{ //wasPressed()) {
+	{
+
 #ifdef BUTTON_DEBUG
 		SerialPort.printf("isPressed C \r\n");
 #endif //BUTTON_DEBUG
 		if (_stateBC == false)
 		{
-			treatmentBtnC(false);
 			_stateBC = true;
 		}
-	}
-
-	if (VarioButton.BtnC.wasReleased())
-	{
-#ifdef BUTTON_DEBUG
-		SerialPort.printf("wasReleased C \r\n");
-#endif //BUTTON_DEBUG
-		_stateBC = false;
 	}
 
 	if (VarioButton.BtnC.pressedFor(2000))
@@ -275,6 +267,20 @@ void VARIOButtonScheduleur::update()
 #ifdef BUTTON_DEBUG
 		SerialPort.printf("pressedFor 2s C \r\n");
 #endif //BUTTON_DEBUG
+		treatmentBtnC2S(false);
+		_stateBC = false;
+	}
+
+	if (VarioButton.BtnC.wasReleased())
+	{
+#ifdef BUTTON_DEBUG
+		SerialPort.printf("wasReleased C \r\n");
+#endif //BUTTON_DEBUG
+		if (_stateBC)
+		{
+			treatmentBtnC(false);
+		}
+		_stateBC = false;
 	}
 }
 
@@ -461,7 +467,7 @@ void VARIOButtonScheduleur::treatmentBtnC(bool Debounce)
 	else if (StatePage == STATE_PAGE_CONFIG_SOUND)
 	{
 		uint8_t tmpvol;
-		tmpvol = RegVolume; 
+		tmpvol = RegVolume;
 		if (tmpvol < 10)
 		{
 			tmpvol++;
@@ -473,6 +479,18 @@ void VARIOButtonScheduleur::treatmentBtnC(bool Debounce)
 	else if (StatePage == STATE_PAGE_INIT)
 	{
 		StatePage = STATE_PAGE_CALIBRATION;
+	}
+}
+
+/************************************************************/
+void VARIOButtonScheduleur::treatmentBtnC2S(bool Debounce)
+{
+	/************************************************************/
+
+	if (StatePage == STATE_PAGE_VARIO)
+	{
+		beeper.generateTone(500, 400);
+		beeper.toggleZerotage();
 	}
 }
 

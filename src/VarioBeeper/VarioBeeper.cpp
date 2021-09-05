@@ -251,3 +251,8 @@ void VarioBeeper::setVelocity(float_t climb)
 
     vario.msShould = climb;
 }
+
+void VarioBeeper::toggleZerotage()
+{
+    _withZerotage = !_withZerotage;
+}

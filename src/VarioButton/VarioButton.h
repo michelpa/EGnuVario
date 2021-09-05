@@ -114,10 +114,11 @@ private:
 
 	void treatmentBtnB3S(bool Debounce);
 	void treatmentBtnA2S(bool Debounce);
+	void treatmentBtnC2S(bool Debounce);
 
 #ifdef HAVE_WIFI
 	void WifiServeur(void);
-	static void startWifi(void * pvParameters);
+	static void startWifi(void *pvParameters);
 #endif //HAVE_WIFI
 
 #ifdef HAVE_SDCARD
