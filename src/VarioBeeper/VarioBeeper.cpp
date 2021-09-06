@@ -172,8 +172,6 @@ void VarioBeeper::startTone(float_t frequency, float_t cycle, float_t duty)
     // Serial.println(vario.duty);
     // Serial.print("vario.frequency");
     // Serial.println(vario.frequency);
-    // Serial.print("amp");
-    // Serial.println(_isAmpOn);
 
     if (vario.timeToneOn == 0 && vario.duty > 0)
     {
@@ -255,4 +253,9 @@ void VarioBeeper::setVelocity(float_t climb)
 void VarioBeeper::toggleZerotage()
 {
     _withZerotage = !_withZerotage;
+}
+
+bool VarioBeeper::isWithZerotage()
+{
+    return _withZerotage;
 }

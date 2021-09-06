@@ -490,7 +490,9 @@ void VARIOButtonScheduleur::treatmentBtnC2S(bool Debounce)
 	if (StatePage == STATE_PAGE_VARIO)
 	{
 		beeper.generateTone(500, 400);
+		delay(500);
 		beeper.toggleZerotage();
+		screen.volLevel->show();
 	}
 }
 

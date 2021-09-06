@@ -14,6 +14,7 @@ class VarioTone
 private:
     uint8_t _volume = BEEP_DEFAULT_VOLUME;
     bool _muted = false;
+    bool _isAmpOn = false;
 
 protected:
     const TickType_t delayT1 = pdMS_TO_TICKS(1); //(1) / portTICK_PERIOD_MS;
@@ -21,7 +22,6 @@ protected:
 
     void enableAmp();
     void disableAmp();
-    bool _isAmpOn = false;
 
 public:
     VarioTone();

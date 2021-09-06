@@ -78,6 +78,7 @@ public:
     void startTask();
     void setVelocity(float_t climb);
     void toggleZerotage();
+    bool isWithZerotage();
 
     void setGlidingAlarmState(bool state);
     void setGlidingBeepState(bool state);
