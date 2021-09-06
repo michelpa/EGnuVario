@@ -407,7 +407,7 @@ class VOLLevel : public VarioScreenObject {
 
   void setVolume(int Volume = 0);
 	void mute(bool newMuteState);
-
+  
   void show(void);
 
  private :
