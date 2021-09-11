@@ -109,9 +109,9 @@ void VARIOButton::begin()
 {
 
 	// Setup the button with an internal pull-up
-	pinMode(BUTTON_A_PIN, INPUT_PULLUP);
-	pinMode(BUTTON_B_PIN, INPUT_PULLUP);
-	pinMode(BUTTON_C_PIN, INPUT_PULLUP);
+	//pinMode(BUTTON_A_PIN, INPUT_PULLUP);
+	//pinMode(BUTTON_B_PIN, INPUT_PULLUP);
+	//pinMode(BUTTON_C_PIN, INPUT_PULLUP);
 
 	// Set wakeup button
 	//    setWakeupButton(BUTTON_A_PIN);
@@ -151,10 +151,10 @@ void VARIOButtonScheduleur::update()
 	/////////////////// BOUTON A  ///////////////////
 	/////////////////////////////////////////////////
 
-	if (VarioButton.BtnA.isPressed())
+	if (VarioButton.BtnA.wasPressed())
 	{
 #ifdef BUTTON_DEBUG
-		SerialPort.printf("isPressed A \r\n");
+		SerialPort.printf("wasPressed A \r\n");
 #endif //BUTTON_DEBUG
 		_stateBA = true;
 	}
@@ -189,6 +189,7 @@ void VARIOButtonScheduleur::update()
 				beeper.generateTone(659, 250);
 				beeper.generateTone(784, 250);
 				beeper.generateTone(1046, 250);
+				delay(500);
 			}
 		}
 #endif
@@ -250,11 +251,11 @@ void VARIOButtonScheduleur::update()
 	/////////////////// BOUTON C  ///////////////////
 	/////////////////////////////////////////////////
 
-	if (VarioButton.BtnC.isPressed())
+	if (VarioButton.BtnC.wasPressed())
 	{
 
 #ifdef BUTTON_DEBUG
-		SerialPort.printf("isPressed C \r\n");
+		SerialPort.printf("wasPressed C \r\n");
 #endif //BUTTON_DEBUG
 		if (_stateBC == false)
 		{
@@ -489,11 +490,12 @@ void VARIOButtonScheduleur::treatmentBtnC2S(bool Debounce)
 
 	if (StatePage == STATE_PAGE_VARIO)
 	{
-		beeper.generateTone(392, 150);
-		beeper.generateTone(392, 150);
-		beeper.generateTone(392, 150);
-		beeper.generateTone(311.1, 500);
-		delay(2000);
+				beeper.generateTone(523, 250);
+				beeper.generateTone(659, 250);
+				beeper.generateTone(784, 250);
+				beeper.generateTone(1046, 250);
+			
+		delay(500);
 		beeper.toggleZerotage();
 		screen.volLevel->show();
 	}
