@@ -109,9 +109,9 @@ void VARIOButton::begin()
 {
 
 	// Setup the button with an internal pull-up
-	//pinMode(BUTTON_A_PIN, INPUT_PULLUP);
-	//pinMode(BUTTON_B_PIN, INPUT_PULLUP);
-	//pinMode(BUTTON_C_PIN, INPUT_PULLUP);
+	pinMode(BUTTON_A_PIN, INPUT);
+	pinMode(BUTTON_B_PIN, INPUT);
+	pinMode(BUTTON_C_PIN, INPUT);
 
 	// Set wakeup button
 	//    setWakeupButton(BUTTON_A_PIN);

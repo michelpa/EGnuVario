@@ -196,7 +196,7 @@ Fly stat        0xD0		26+2
 /*           Buttons        */
 /****************************/
 
-#define VARIOBTN_LEFT_PIN 38
+/*#define VARIOBTN_LEFT_PIN 38
 #define VARIOBTN_CENTER_PIN 37
 #define VARIOBTN_RIGHT_PIN 39
 
@@ -206,7 +206,7 @@ Fly stat        0xD0		26+2
 #define BUTTON_A 0
 #define BUTTON_B 1
 #define BUTTON_C 2
-
+*/
 #define BUTTON_A_PIN 38
 #define BUTTON_B_PIN 37
 #define BUTTON_C_PIN 39
@@ -352,7 +352,7 @@ Fly stat        0xD0		26+2
 #endif
 
 /* Set the freq */
-#define VARIO_TW_FREQ 400000UL
+#define VARIO_TW_FREQ 100000UL
 
 /*********************/
 /* MPU 9250 / MS5611 */
