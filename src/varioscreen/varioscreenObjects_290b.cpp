@@ -69,7 +69,7 @@
  *    1.2.2  17/05/20   Ajout setPositionTitle                                   *
  *    1.2.3  25/05/20   Modification screendigit.setvalue                        *
  *    1.2.4  31/05/21   Compatibilité écran 292 (GDEW029M06)                     *
- *                                                                               *
+ *    1.2.5  14/09/21   Ajout icone zerotage                                                                            *
  *                                                                               *
  *********************************************************************************/ 
 
@@ -124,7 +124,7 @@
 #include <varioscreenIcone_290b.h>
 
 #include <VarioSettings.h>
-#include <toneHAL.h>
+#include <VarioBeeper.h>
 
 #include <Utility.h>
 
@@ -935,7 +935,7 @@ void ScreenDigit::show() {
  
   if (showtitle) {
 		
-		display.fillRect(titleX-1, titleY-MaxTitleHeight-1, MaxTitleWidth+2, MaxTitleHeight+2, GxEPD_WHITE);
+		display.fillRect(titleX-1, titleY-MaxTitleHeight-1, 70, 12, GxEPD_WHITE);
 		display.setFont(&NotoSans6pt7b);  //&FreeSansBold8pt7b);
 		display.setTextColor(ColorText);
 		display.setTextSize(1);
@@ -2288,7 +2288,21 @@ const unsigned char volume3icons[] = {
 0xff, 0x8f, 0xf7, 0xff, 0xcf, 0xff, 0xff, 0xef, 0xff
 };
 
+const unsigned char zerotageOff[] PROGMEM = {
+	//zeroingoffx32, 21x21px
+	0xff, 0xff, 0xf8, 0xff, 0x0f, 0xb8, 0xfc, 0x03, 0x38, 0xf8, 0x70, 0x38, 0xf1, 0xf8, 0x78, 0xe7, 
+	0xf0, 0x78, 0xe7, 0xe1, 0x38, 0xcf, 0xc3, 0x38, 0xcf, 0x87, 0x38, 0xcf, 0x1f, 0x38, 0xce, 0x3f, 
+	0x38, 0xcc, 0x7f, 0x38, 0xe0, 0xff, 0x38, 0xe1, 0xfe, 0x78, 0xe1, 0xfc, 0xf8, 0xc0, 0xf0, 0xf8, 
+	0x8c, 0x03, 0xf8, 0x9f, 0x0f, 0xf8, 0xff, 0xff, 0xf8, 0xff, 0xff, 0xf8, 0xff, 0xff, 0xf8
+};
 
+const unsigned char zerotageOn [] PROGMEM = {
+	//zeroingonx32, 21x21px
+	0xff, 0xff, 0xf8, 0xff, 0x0f, 0xf8, 0xfc, 0x03, 0xf8, 0xf8, 0x70, 0xf8, 0xf1, 0xfc, 0xf8, 0xe7, 
+	0xfe, 0x78, 0xe7, 0xff, 0x38, 0xcf, 0xff, 0x38, 0xcf, 0xff, 0x38, 0xcf, 0xff, 0x38, 0xcf, 0xff, 
+	0x38, 0xcf, 0xff, 0x38, 0xe7, 0xff, 0x38, 0xe7, 0xfe, 0x78, 0xf1, 0xfc, 0xf8, 0xf8, 0xf0, 0xf8, 
+	0xfc, 0x03, 0xf8, 0xff, 0x0f, 0xf8, 0xff, 0xff, 0xf8, 0xff, 0xff, 0xf8, 0xff, 0xff, 0xf8
+};
 
 
 
@@ -2341,6 +2355,16 @@ void VOLLevel::show(void) {
   else if (volume < 5) display.drawInvertedBitmap(posX, posY, volume1icons, 17, 19, GxEPD_BLACK);   //GxEPD_BLACK);
   else if (volume < 9) display.drawInvertedBitmap(posX, posY, volume2icons, 20, 19, GxEPD_BLACK);   //GxEPD_BLACK);
   else  display.drawInvertedBitmap(posX, posY, volume3icons, 24, 19, GxEPD_BLACK);   //GxEPD_BLACK);
+
+//ajout d'un indicateur de zerotage sonore en dessous
+  display.fillRect(posX + 71, posY + 16, 21, 21, GxEPD_WHITE);
+  if (beeper.isWithZerotage()){
+		display.drawInvertedBitmap(posX + 71, posY + 16 , zerotageOn, 21, 21, GxEPD_BLACK); 
+  } else {
+		display.drawInvertedBitmap(posX + 71, posY + 16 , zerotageOff, 21, 21, GxEPD_BLACK); 
+  }
+
+
 }
    
 //****************************************************************************************************************************
@@ -2763,7 +2787,7 @@ void ScreenTime::show(void) {
 	display.fillRect(posX-69, posY-25, 14, 24, GxEPD_WHITE);
     display.drawBitmap(posX-70, posY-25,doticons,  16, 24, GxEPD_BLACK);   //GxEPD_BLACK);
 	}*/
-  display.fillRect(posX-121, posY-10-28, 88, 10, GxEPD_WHITE);
+  display.fillRect(posX-160, posY-10-28, 88, 12, GxEPD_WHITE);
 	
 	display.setFont(&NotoSans6pt7b); 
 	display.setTextColor(ColorText);
